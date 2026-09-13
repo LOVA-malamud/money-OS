@@ -1,0 +1,10 @@
+{
+  "buildCommand": "npm run build", "outputDirectory": "dist",
+  "rewrites": [{ "source": "/((?!assets/|icons/|sw.js|workbox-|manifest.webmanifest).*)", "destination": "/index.html" }],
+  "headers": [{ "source": "/(.*)", "headers": [
+    { "key": "X-Content-Type-Options", "value": "nosniff" },
+    { "key": "Referrer-Policy", "value": "no-referrer" },
+    { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
+    { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://*.supabase.co; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'" }
+  ] }]
+}

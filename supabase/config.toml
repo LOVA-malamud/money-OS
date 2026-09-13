@@ -1,0 +1,16 @@
+project_id = "lova-money-os"
+
+[api]
+enabled = true
+schemas = ["public"]
+extra_search_path = ["public", "extensions"]
+
+[auth]
+enabled = true
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://127.0.0.1:5173"]
+enable_signup = false
+enable_anonymous_sign_ins = false
+
+# Set the production Site URL and exact allowed redirect URL in the hosted project.
+# No owner UUID, password, project key or privileged credential belongs in this file.
