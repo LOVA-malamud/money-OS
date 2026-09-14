@@ -39,6 +39,8 @@ Hobby is intended for personal, non-commercial use. This private personal applic
 
 Ordinary email/password login does not send email. Supabase's default sender only delivers to organization-team email addresses, currently permits two messages per hour, and provides best-effort delivery. Phase A's owner-only recovery page can use it, but verify delivery once during setup. Do not promise reliable production email delivery from this default service.
 
+The default recovery email contains an inline **Reset password** link, which may not look like a button. Open the full HTML message, rather than an email notification or text summary. A rate-limit error means that request did not send a new message; use the newest message actually delivered and do not repeatedly resend. On new Free projects using the default sender, template editing is restricted; do not add paid infrastructure or weaken Auth merely to style this link.
+
 If a recovery message cannot be delivered, retain access to the Supabase organization account and use Supabase's administrator recovery capability to update the existing application's user password. The official JavaScript administrator method is `auth.admin.updateUserById(ownerUserId, { password: newPassword })`. Run it only from a trusted local/server administrator context; supply the secret key and new password privately, never in browser code, command arguments, screenshots, logs or committed files. This fallback updates the existing auth user; do not delete and recreate the user, which would change the owner UUID. A private administrator recovery script can be prepared when needed rather than exposing a permanent recovery endpoint.
 
 ## Independent JSON backup and restore

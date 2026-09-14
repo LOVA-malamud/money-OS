@@ -29,11 +29,11 @@ export function AuthScreen({ recovery = false, onRecovered }: { recovery?: boole
   }
   async function reset() {
     if (!email.trim()) { setError('יש להזין את כתובת הדוא״ל של החשבון.'); return; }
-    setBusy(true); setError('');
+    setBusy(true); setError(''); setMessage('');
     try {
-      const result = await supabase!.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
+      const result = await supabase!.auth.resetPasswordForEmail(email.trim(), { redirectTo: window.location.origin });
       if (result.error) throw result.error;
-      setMessage('אם הכתובת מורשית, יישלח אליה קישור לעדכון הסיסמה.');
+      setMessage('אם הכתובת מורשית, יישלח אליה קישור לעדכון הסיסמה. פתחו את המייל המלא ולחצו על הטקסט ״Reset password״ — זהו הקישור, גם אם אינו נראה כמו כפתור.');
     } catch (cause) { setError(humanError(cause)); }
     finally { setBusy(false); }
   }

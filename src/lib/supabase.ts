@@ -17,6 +17,8 @@ export function humanError(error: unknown): string {
   const message = error instanceof Error ? error.message : typeof error === 'object' && error !== null && 'message' in error ? String(error.message) : '';
   if (/[\u0590-\u05ff]/.test(message)) return message;
   const lower = message.toLowerCase();
+  if (/email.*rate.*limit|over_email_send_rate_limit/.test(lower)) return 'שירות הדוא״ל הגיע למגבלת השליחה. הבקשה הזו לא שלחה מייל חדש. יש להמתין לפני ניסיון נוסף; אפשר לבדוק את המייל האחרון שכבר התקבל.';
+  if (/rate.*limit|over_request_rate_limit/.test(lower)) return 'בוצעו יותר מדי בקשות בזמן קצר. יש להמתין לפני ניסיון נוסף.';
   if (/invalid login|invalid credentials/.test(lower)) return 'כתובת הדוא״ל או הסיסמה אינן נכונות.';
   if (/restore_snapshot_changed/.test(lower)) return 'הנתונים השתנו מאז הורדת עותק הבטיחות. יש להוריד עותק חדש ולאשר שוב לפני השחזור.';
   if (/revision|conflict|stale/.test(lower)) return 'הפריט השתנה במכשיר אחר. יש לרענן ולבדוק את הגרסה העדכנית.';
