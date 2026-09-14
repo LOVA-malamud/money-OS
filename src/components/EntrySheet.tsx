@@ -1,4 +1,4 @@
-import { Select } from './Primitives';
+import { Select, cycleDialogFocus } from './Primitives';
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { ArrowLeftRight, ChevronDown, Delete, Heart, House, MoreHorizontal, ShoppingBag, ShoppingCart, CarFront, Banknote, Percent, BriefcaseBusiness, Utensils, WalletCards, X } from 'lucide-react';
 import type { Dataset, EntryKind, FinancialEntryInput, Transaction } from '../domain/types';
@@ -33,12 +33,7 @@ export function FormDialog({ title, children, onClose, busy = false, className =
     });
     const handleKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && !busyRef.current) { event.preventDefault(); closeRef.current(); }
-      if (event.key !== 'Tab') return;
-      const elements = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex="0"]') ?? []).filter(element => element.getClientRects().length > 0);
-      const first = elements[0]; const last = elements.at(-1);
-      if (!first) { event.preventDefault(); return; }
-      if (event.shiftKey && (document.activeElement === first || !dialogRef.current?.contains(document.activeElement))) { event.preventDefault(); last?.focus(); }
-      if (!event.shiftKey && (document.activeElement === last || !dialogRef.current?.contains(document.activeElement))) { event.preventDefault(); first.focus(); }
+      cycleDialogFocus(event, dialogRef.current);
     };
     document.addEventListener('keydown', handleKey);
     return () => { cancelAnimationFrame(frame); document.removeEventListener('keydown', handleKey); document.body.style.overflow = oldOverflow; previous?.focus(); };

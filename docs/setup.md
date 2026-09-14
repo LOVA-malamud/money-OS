@@ -77,3 +77,7 @@ Run `npx vitest run tests/database` for real PostgreSQL migration/permission/int
 - [Supabase backup coverage](https://supabase.com/docs/guides/platform/backups)
 - [Supabase Free project pausing](https://supabase.com/docs/guides/platform/free-project-pausing)
 - [Vercel plans](https://vercel.com/docs/plans)
+
+## Production-readiness regression
+
+After changes, run `npm run check`, the complete `npm run test:e2e` fixture suite, then `npm run test:pwa` against the freshly generated `dist`. The PWA test starts a temporary loopback static server, blocks real Supabase traffic, and verifies worker installation, consent-based updates and API cache isolation without an owner login. Browser fixture tests use fictional local data on dedicated ports 5183/54321 and refuse to reuse existing servers, so a real-backend development app on 5173 cannot be reused accidentally. Never point their reset helpers at production.

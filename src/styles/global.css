@@ -16,6 +16,7 @@ h2 { font-size: 1.25rem; font-weight: 600; }
 h3 { font-size: 1.0625rem; font-weight: 600; }
 svg { flex-shrink: 0; }
 .numeric, bdi { font-family: var(--font-numeric); font-variant-numeric: tabular-nums; unicode-bidi: isolate; }
+.numeric { display: inline-block; max-inline-size: 100%; overflow-wrap: anywhere; white-space: normal; vertical-align: bottom; }
 .muted { color: var(--muted); }
 .small { font-size: var(--type-small); }
 .mint { color: var(--mint); }
@@ -73,13 +74,13 @@ svg { flex-shrink: 0; }
 .desktop-nav-title { display: none; }
 .hero { padding-block: 14px 26px; }
 .hero-label { font-size: 1.25rem; font-weight: 550; }
-.hero-number { font-size: var(--type-hero); line-height: 1.35; font-weight: 700; letter-spacing: -.035em; margin-block: 2px 14px; white-space: nowrap; }
+.hero-number { font-size: var(--type-hero); line-height: 1.35; font-weight: 700; letter-spacing: -.035em; margin-block: 2px 14px; }
 .hero-unknown { font-size: 2rem; color: var(--muted); margin-block: 10px 20px; }
 .after-obligations { border: 0; padding: 0; background: none; text-align: start; inline-size: 100%; }
 .after-obligations .value { font-size: 2.25rem; font-weight: 650; color: var(--mint); line-height: 1.5; }
 .after-obligations .label { font-size: 1rem; }
 .after-obligations .explanation { color: var(--muted); font-size: .875rem; }
-.month-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding-block: 20px; border-block: 1px solid var(--line); }
+.month-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; padding-block: 20px; border-block: 1px solid var(--line); }
 .month-pair > :first-child { border-inline-end: 1px solid var(--line); }
 .metric-button { background: none; border: 0; text-align: start; padding: 0; inline-size: 100%; }
 .metric-label { color: var(--muted); font-size: .95rem; }
@@ -108,7 +109,7 @@ select { appearance: none; block-size: 46px; padding-inline-end: 34px; }
 .select-display > bdi { flex-shrink: 0; }
 @media (pointer: coarse) { input, select, textarea { font-size: max(1rem, 16px); } }
 textarea { min-block-size: 80px; resize: vertical; }
-.field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
 .checkbox-field { display: flex; align-items: center; gap: 10px; min-block-size: 44px; }
 .form-actions { display: flex; gap: 12px; margin-block-start: 10px; }
 .form-actions > * { flex: 1; }
@@ -150,3 +151,12 @@ textarea { min-block-size: 80px; resize: vertical; }
   .content-narrow { max-inline-size: 720px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
+/* Retain every digit and control at narrow widths and enlarged text sizes. */
+.summary-row > *, .row-button > *, .list-row > *, .detail-list dd { min-inline-size: 0; overflow-wrap: anywhere; }
+.nav-add { flex-shrink: 0; }
+.nav-item, .brand-subtitle, .sheet-header h2, .page-heading { overflow-wrap: anywhere; }
+.app { padding-inline: env(safe-area-inset-right) env(safe-area-inset-left); }
+@media (min-width: 800px) { .app { padding-inline-start: calc(220px + env(safe-area-inset-right)); } }
+.hero-number, .after-obligations .value, .month-pair .metric-value { container-type: inline-size; }
+.hero-number > .numeric, .after-obligations .value > .numeric, .month-pair .metric-value > .numeric { font-size: clamp(.875rem, calc(160cqi / var(--money-length)), 1em); }
+.numeric > span { display: inline-block; }

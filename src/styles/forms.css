@@ -94,3 +94,4 @@
   .transaction-row { padding-inline: 8px; }
   .transaction-amount { font-size: 1.0625rem; }
 }
+.transaction-amount { flex-shrink: 1; min-inline-size: 0; max-inline-size: 60%; white-space: normal; overflow-wrap: anywhere; }

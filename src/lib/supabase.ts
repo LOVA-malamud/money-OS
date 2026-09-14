@@ -20,6 +20,8 @@ export function humanError(error: unknown): string {
   if (/email.*rate.*limit|over_email_send_rate_limit/.test(lower)) return 'שירות הדוא״ל הגיע למגבלת השליחה. הבקשה הזו לא שלחה מייל חדש. יש להמתין לפני ניסיון נוסף; אפשר לבדוק את המייל האחרון שכבר התקבל.';
   if (/rate.*limit|over_request_rate_limit/.test(lower)) return 'בוצעו יותר מדי בקשות בזמן קצר. יש להמתין לפני ניסיון נוסף.';
   if (/invalid login|invalid credentials/.test(lower)) return 'כתובת הדוא״ל או הסיסמה אינן נכונות.';
+  if (/jwt.*expired|invalid.*jwt|refresh.*token|session.*expired/.test(lower)) return 'תוקף הכניסה הסתיים. יש לצאת מהחשבון ולהתחבר שוב כדי לטעון נתונים עדכניים.';
+  if (/project.*paused|service.*unavailable|bad gateway/.test(lower)) return 'שירות הנתונים אינו זמין כרגע. אין אפשרות לאמת את היתרות. יש לנסות שוב לאחר חזרת השירות.';
   if (/restore_snapshot_changed/.test(lower)) return 'הנתונים השתנו מאז הורדת עותק הבטיחות. יש להוריד עותק חדש ולאשר שוב לפני השחזור.';
   if (/revision|conflict|stale/.test(lower)) return 'הפריט השתנה במכשיר אחר. יש לרענן ולבדוק את הגרסה העדכנית.';
   if (/generation|dataset_changed/.test(lower)) return 'הנתונים שוחזרו מאז פתיחת המסך. יש לרענן לפני המשך העבודה.';

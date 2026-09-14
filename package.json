@@ -15,7 +15,8 @@
     "test:database": "vitest run tests/database",
     "dev:fixture": "tsx tests/local-server.ts",
     "dev:local": "VITE_SUPABASE_URL=http://127.0.0.1:54321 VITE_SUPABASE_PUBLISHABLE_KEY=local-test-public-key VITE_LOCAL_TEST=true vite --host 0.0.0.0 --port 5173 --strictPort",
-    "check": "npm run typecheck && npm run lint && npm test && npm run build"
+    "check": "npm run typecheck && npm run lint && npm test && npm run build",
+    "test:pwa": "playwright test --config playwright.pwa.config.ts"
   },
   "dependencies": {
     "@fontsource/heebo": "5.3.0",

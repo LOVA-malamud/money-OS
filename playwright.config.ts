@@ -9,7 +9,7 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
-    baseURL: 'http://127.0.0.1:5173',
+    baseURL: 'http://127.0.0.1:5183',
     locale: 'he-IL',
     timezoneId: 'Asia/Jerusalem',
     trace: 'retain-on-failure',
@@ -22,10 +22,10 @@ export default defineConfig({
     { name: 'desktop-chromium', use: { browserName: 'chromium', viewport: { width: 1440, height: 1024 } } },
   ],
   webServer: [
-    { command: 'node --import tsx tests/local-server.ts', url: 'http://127.0.0.1:54321/health', reuseExistingServer: !process.env.CI, timeout: 90_000 },
+    { command: 'node --import tsx tests/local-server.ts', url: 'http://127.0.0.1:54321/health', reuseExistingServer: false, timeout: 90_000 },
     {
-      command: 'npm run dev -- --host 127.0.0.1 --port 5173 --strictPort',
-      url: 'http://127.0.0.1:5173', reuseExistingServer: !process.env.CI, timeout: 60_000,
+      command: 'npm run dev -- --host 127.0.0.1 --port 5183 --strictPort',
+      url: 'http://127.0.0.1:5183', reuseExistingServer: false, timeout: 60_000,
       env: { VITE_LOCAL_TEST: 'true', VITE_SUPABASE_URL: 'http://127.0.0.1:54321', VITE_SUPABASE_PUBLISHABLE_KEY: 'local-fixture-only' },
     },
   ],
