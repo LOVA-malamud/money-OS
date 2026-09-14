@@ -52,13 +52,15 @@ The primary balance, monthly pair and lower financial rows were inspected in the
 
 ## Release checklist
 
+2026-09-14 production audit: [deployment-status.md](docs/deployment-status.md) is the current release record. The original visual review above is historical; the latest full run passes 60 browser cases plus 75 unit/PostgreSQL tests, with additional PWA lifecycle coverage.
+
 - [x] Quiet Balance dashboard and practical Quick Add implemented.
 - [x] Financial, PostgreSQL and core browser checks pass.
 - [x] Validated JSON recovery with a required safety export and concurrent-change rejection.
 - [x] PWA build, icons and responsive desktop layout.
-- [ ] Apply migrations to the user's Supabase Free project; provision and verify the sole owner and Auth settings.
-- [ ] Configure the public environment values and final HTTPS frontend URL.
-- [ ] Verify real password recovery, owner access and an export/restore rehearsal against that project.
+- [x] Apply migrations to the user's Supabase Free project; provision and verify the sole owner and Auth settings.
+- [x] Configure the public environment values and final HTTPS frontend URL.
+- [x] Verify real password recovery, owner access and an export/restore rehearsal against that project. A fresh owner login remains pending because the user no longer knows the subsequently changed password; further recovery requests are paused.
 - [ ] Install and smoke-test on the physical iPhone, including Safari picker behavior and system accessibility settings.
 
-Physical-device Dynamic Type/VoiceOver and hosted Supabase behavior were not verified by the local browser fixture. No Phase B/C implementation is included.
+Physical-device Dynamic Type/VoiceOver remain unverified. Hosted Supabase evidence and its limits are recorded separately in the production audit; local fixture tests do not substitute for physical-device checks. No Phase B/C implementation is included.
