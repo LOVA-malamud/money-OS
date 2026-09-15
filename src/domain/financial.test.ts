@@ -317,6 +317,31 @@ describe('obligations and completeness', () => {
     bill(data, { dueDate: '2026-10-01', expectedMinor: '1000', liabilityAccountId: ids.card, categoryId: null });
     expect(dashboard(data).remaining.amountMinor).toBe('100000');
   });
+  it.each([
+    { name: 'prepaid future bill with residual debt', dueDate: '2026-09-20', expected: '6000', payment: '6000', status: 'incomplete', cash: '94000', debt: '-6000' },
+    { name: 'same-day fully paid bill with residual debt', dueDate: '2026-09-13', expected: '6000', payment: '6000', status: 'incomplete', cash: '94000', debt: '-6000' },
+    { name: 'zero-amount bill with residual debt', dueDate: '2026-09-20', expected: '0', payment: '0', status: 'incomplete', cash: '100000', debt: '-12000' },
+    { name: 'genuine future unpaid settlement', dueDate: '2026-10-01', expected: '6000', payment: '0', status: 'known', cash: '100000', debt: '-12000' },
+    { name: 'fully cleared card', dueDate: '2026-09-20', expected: '12000', payment: '12000', status: 'known', cash: '88000', debt: '0' },
+  ])('requires outstanding card coverage: $name', ({ dueDate, expected, payment, status, cash, debt }) => {
+    const data = fixture();
+    record(data, { ...expense('12000'), accountId: ids.card });
+    const settlement = bill(data, { dueDate, expectedMinor: expected, liabilityAccountId: ids.card, categoryId: null });
+    if (payment !== '0') record(data, { kind: 'repayment', date: '2026-09-13', accountId: ids.bank, toAccountId: ids.card, amountMinor: payment, principalMinor: payment, obligationId: settlement.id });
+    const summary = dashboard(data);
+    expect(accountBalance(ids.card, data).amountMinor).toBe(debt);
+    expect(summary.available.amountMinor).toBe(cash);
+    expect(summary.spending.amountMinor).toBe('12000');
+    for (const [value, subtotal] of [[summary.remaining, cash], [summary.unpaid, '0'], [summary.remainingObligations, '0']] as const) {
+      expect(value.status).toBe(status);
+      if (value.status === 'known') expect(value).toEqual({ status: 'known', amountMinor: subtotal, reasons: [] });
+      else {
+        expect(value.amountMinor).toBeNull();
+        expect(value.knownSubtotalMinor).toBe(subtotal);
+        expect(value.reasons).toEqual(['יש לבדוק את מועד וסכום התשלום בכרטיס כרטיס']);
+      }
+    }
+  });
   it('keeps an explicitly dated overdue card payment reserved without inventing another missing bill', () => {
     const data = fixture(); record(data, { ...expense('12000'), accountId: ids.card });
     bill(data, { dueDate: '2026-09-12', expectedMinor: '12000', liabilityAccountId: ids.card, categoryId: null });

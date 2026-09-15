@@ -86,7 +86,7 @@ export function dashboard(dataset: Dataset, asOf = todayJerusalem()): DashboardS
     const balance = balances.get(account.id)!;
     const pendingCardCharge = statements.some((item) => !['cancelled', 'paid'].includes(item.status) && item.obligation.accountId === account.id && item.obligation.dueDate <= horizon);
     if (balance.status !== 'known' || metricSubtotal(balance) < 0n || pendingCardCharge) {
-      const datedSettlement = statements.some((item) => item.status !== 'cancelled' && item.obligation.liabilityAccountId === account.id && (item.obligation.dueDate >= asOf || item.status !== 'paid'));
+      const datedSettlement = statements.some((item) => !['cancelled', 'paid'].includes(item.status) && item.obligation.liabilityAccountId === account.id);
       if (!datedSettlement) cardReasons.push(`יש לבדוק את מועד וסכום התשלום בכרטיס ${account.name}`);
     }
   }

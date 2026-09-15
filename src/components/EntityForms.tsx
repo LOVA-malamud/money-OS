@@ -1,5 +1,5 @@
 import { Select } from './Primitives';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import type { Account, AccountKind, Category, Dataset, Debt, EntityInput, EntityName, Obligation, PaymentMethod, Recurrence } from '../domain/types';
 import { formatMoneyInput, parseMoney } from '../domain/money';
 import { todayJerusalem } from '../domain/dates';
@@ -54,7 +54,30 @@ export function EntityEditor({ kind, data, existing, initialAccountKind = 'bank'
   const liveAccounts = data.accounts.filter(item => !item.archived || item.id === accountId);
   const paymentAccounts = liveAccounts.filter(item => ['bank', 'cash', 'savings', 'credit_card'].includes(item.kind));
   const liabilityAccounts = liveAccounts.filter(item => ['loan', 'credit_card'].includes(item.kind));
-  const hasTransactions = Boolean(account && data.transactions.some(transaction => transaction.postings.some(posting => posting.accountId === account.id)));
+  const formValue = JSON.stringify({ name, accountKind, spendable, archived, accountId, liabilityAccountId, categoryId, amount, unknownAmount, date, endDate, day, active, suffix, categoryKind, pinned, icon, originalAmount, note });
+  const [initialValue] = useState(formValue);
+  const [saved, setSaved] = useState(false);
+  const dirty = !saved && formValue !== initialValue;
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const continueRef = useRef<HTMLButtonElement>(null);
+  const previousFocus = useRef<HTMLElement | null>(null);
+  function requestClose() {
+    if (saving) return;
+    if (confirmDiscard) { setConfirmDiscard(false); return; }
+    if (!dirty) { onClose(); return; }
+    previousFocus.current = document.activeElement as HTMLElement | null;
+    setConfirmDiscard(true);
+  }
+  useEffect(() => {
+    if (confirmDiscard) continueRef.current?.focus();
+    else if (previousFocus.current?.isConnected) previousFocus.current.focus();
+  }, [confirmDiscard]);
+  useEffect(() => {
+    if (!dirty) return;
+    const preventUnload = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ''; };
+    window.addEventListener('beforeunload', preventUnload);
+    return () => window.removeEventListener('beforeunload', preventUnload);
+  }, [dirty]);
   const isSchedule = kind === 'obligation' || kind === 'recurrence';
   const revision = existing?.revision ?? 0;
 
@@ -95,18 +118,24 @@ export function EntityEditor({ kind, data, existing, initialAccountKind = 'bank'
       }
       setSaving(true);
       await onSave(kind, value, existing?.revision);
+      setSaved(true);
       onClose();
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'השמירה לא אושרה. אפשר לנסות שוב.'); }
     finally { setSaving(false); }
   }
 
-  return <FormDialog title={`${existing ? 'עריכת' : 'הוספת'} ${entityLabels[kind]}`} onClose={onClose} busy={saving}>
-    <form className="form-stack entity-form" onSubmit={submit} noValidate>
+  return <FormDialog title={`${existing ? 'עריכת' : 'הוספת'} ${entityLabels[kind]}`} onClose={requestClose} busy={saving}>
+    {confirmDiscard && <div className="form-stack" role="group" aria-label="שינויים שלא נשמרו">
+      <p>השינויים עדיין לא נשמרו. להמשיך בעריכה או לצאת ולמחוק אותם?</p>
+      <button ref={continueRef} type="button" className="button button-primary" onClick={() => setConfirmDiscard(false)}>המשך עריכה</button>
+      <button type="button" className="button button-secondary" onClick={onClose}>יציאה ללא שמירה</button>
+    </div>}
+    <form style={confirmDiscard ? { display: 'none' } : undefined} className="form-stack entity-form" onSubmit={submit} noValidate>
       <fieldset disabled={saving} className="entry-fieldset form-stack">
         <label className="field"><span>{kind === 'debt' ? 'למי החוב?' : 'שם'}</span><input data-initial-focus value={name} onChange={event => setName(event.target.value)} required maxLength={120} placeholder={kind === 'obligation' || kind === 'recurrence' ? 'למשל, חשבון הטלפון' : kind === 'debt' ? 'שם הבנק או האדם' : undefined} /></label>
         {kind === 'account' && <>
-          <label className="field"><span>סוג החשבון</span><Select value={accountKind} disabled={hasTransactions} onChange={event => { const next = event.target.value as AccountKind; setAccountKind(next); setSpendable(['bank', 'cash'].includes(next)); }}>{Object.entries(accountKindLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</Select></label>
-          {hasTransactions && <p className="muted">סוג החשבון נשמר לאחר שנרשמו בו תנועות.</p>}
+          <label className="field"><span>סוג החשבון</span><Select value={accountKind} disabled={Boolean(existing)} onChange={event => { const next = event.target.value as AccountKind; setAccountKind(next); setSpendable(['bank', 'cash'].includes(next)); }}>{Object.entries(accountKindLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</Select></label>
+          {existing && <p className="muted">סוג החשבון נקבע בעת יצירתו ואינו ניתן לשינוי.</p>}
           {['bank', 'cash', 'savings'].includes(accountKind) && <label className="checkbox-field"><input type="checkbox" checked={spendable} onChange={event => setSpendable(event.target.checked)} /><span>לכלול בכסף הזמין לשימוש</span></label>}
           {!existing && <p className="notice">לאחר יצירת החשבון אפשר להזין יתרה התחלתית. עד אז היתרה תוצג כלא ידועה.</p>}
           {existing && <label className="checkbox-field"><input type="checkbox" checked={archived} onChange={event => setArchived(event.target.checked)} /><span>החשבון אינו פעיל</span></label>}
@@ -117,7 +146,8 @@ export function EntityEditor({ kind, data, existing, initialAccountKind = 'bank'
           <label className="field"><span>ארבע ספרות אחרונות · לא חובה</span><input inputMode="numeric" dir="ltr" autoComplete="off" value={suffix} maxLength={4} onChange={event => setSuffix(event.target.value.replace(/\D/g, ''))} /></label>
         </>}
         {kind === 'category' && <>
-          <label className="field"><span>סוג</span><Select value={categoryKind} onChange={event => setCategoryKind(event.target.value as 'expense' | 'income')}><option value="expense">הוצאה</option><option value="income">הכנסה</option></Select></label>
+          <label className="field"><span>סוג</span><Select value={categoryKind} disabled={Boolean(existing)} onChange={event => setCategoryKind(event.target.value as 'expense' | 'income')}><option value="expense">הוצאה</option><option value="income">הכנסה</option></Select></label>
+          {existing && <p className="muted">סוג הקטגוריה נקבע בעת יצירתה ואינו ניתן לשינוי.</p>}
           <label className="field"><span>סמל</span><Select value={icon} onChange={event => setIcon(event.target.value)}><option value="more-horizontal">כללי</option><option value="utensils">אוכל</option><option value="shopping-bag">קניות</option><option value="house">בית</option><option value="heart">בריאות</option><option value="wallet">כסף</option></Select></label>
           <label className="checkbox-field"><input type="checkbox" checked={pinned} onChange={event => setPinned(event.target.checked)} /><span>להציג בראש רשימת הקטגוריות</span></label>
         </>}
