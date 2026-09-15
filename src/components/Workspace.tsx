@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { ChartNoAxesColumnIncreasing, List, CalendarDays, Wallet, Plus, RefreshCw, Check, X, ArrowDownLeft, ArrowLeftRight, CornerDownLeft } from 'lucide-react';
 import type { Account, AccountKind, CommandAction, Dataset, EntityInput, EntityName, FinancialEntryInput, ObligationSummary, Transaction } from '../domain/types';
 import { todayJerusalem } from '../domain/dates';
@@ -12,7 +12,7 @@ import { Empty, Modal, Money, dateLabel } from './Primitives';
 import Overview from '../pages/Overview';
 import MoneyPage from '../pages/MoneyPage';
 import ObligationsPage from '../pages/ObligationsPage';
-import SettingsPage from '../pages/SettingsPage';
+const SettingsPage = lazy(() => import('../pages/SettingsPage'));
 
 type Page = 'overview'|'history'|'obligations'|'money'|'settings';
 type Editor = { kind: 'entry'; key: string; operationId: string; transactionId: string; initial: Partial<FinancialEntryInput>; editing?: Transaction }
@@ -20,7 +20,7 @@ type Editor = { kind: 'entry'; key: string; operationId: string; transactionId: 
 type Toast = { message: string; undo?: CommandAction };
 function initialPage():Page { const page=window.location.hash.slice(1); return ['overview','history','obligations','money','settings'].includes(page)?page as Page:'overview'; }
 
-export default function Workspace({ userId, updateAvailable, onUpdate }: { userId: string; updateAvailable: boolean; onUpdate: () => void }) {
+export default function Workspace({ userId, updateAvailable, onUpdate, onAuthNotice }: { userId: string; updateAvailable: boolean; onUpdate: () => void; onAuthNotice: (message: string) => void }) {
   const store = useDataset(userId);
   const { data } = store;
   const [page,setPage] = useState<Page>(initialPage);
@@ -32,6 +32,14 @@ export default function Workspace({ userId, updateAvailable, onUpdate }: { userI
   const toastTimer = useRef<ReturnType<typeof setTimeout>|null>(null);
   const [entryCoolingDown,setEntryCoolingDown] = useState(false);
   const cooldownTimer = useRef<ReturnType<typeof setTimeout>|null>(null);
+  const navRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const measure = () => document.documentElement.style.setProperty('--nav-occupied', `${nav.getBoundingClientRect().height}px`);
+    const observer = new ResizeObserver(measure); observer.observe(nav); measure();
+    return () => { observer.disconnect(); document.documentElement.style.removeProperty('--nav-occupied'); };
+  }, [Boolean(data)]);
   const sessionKey = `${storageNamespace}:${userId}`;
   useEffect(()=>{const handle=()=>setPage(initialPage()); window.addEventListener('hashchange',handle); return()=>window.removeEventListener('hashchange',handle);},[]);
   useEffect(()=>()=>{if(toastTimer.current)clearTimeout(toastTimer.current);if(cooldownTimer.current)clearTimeout(cooldownTimer.current);},[]);
@@ -64,7 +72,20 @@ export default function Workspace({ userId, updateAvailable, onUpdate }: { userI
   }
   async function voidTransaction(transaction:Transaction){const result=await store.execute({type:'void',id:transaction.id,expectedRevision:transaction.revision});showToast('התנועה בוטלה והיתרות עודכנו',{type:'unvoid',id:transaction.id,expectedRevision:result.revision!});}
   async function undo(){if(!toast?.undo)return;setUndoing(true);setActionError('');try{await store.execute(toast.undo);showToast('הפעולה בוטלה');}catch(cause){setActionError(humanError(cause));}finally{setUndoing(false);}}
-  async function signOut(){if(store.pending)throw new Error('יש להשלים את בדיקת השמירה לפני יציאה.');const result=await supabase!.auth.signOut();if(result.error)throw result.error;for(const key of Object.keys(localStorage)){if(key.startsWith('lova:')&&key.includes(userId))localStorage.removeItem(key);}}
+  async function signOut() {
+    if (store.pending) throw new Error('יש להשלים את בדיקת השמירה לפני יציאה.');
+    const result = await supabase!.auth.signOut();
+    // Auth removes the local session even when server revocation fails. Keep
+    // the warning above Workspace so it survives that component unmounting.
+    let draftsCleared = true;
+    try { for (const key of Object.keys(localStorage)) if (key.startsWith('lova:') && key.includes(userId)) localStorage.removeItem(key); }
+    catch { draftsCleared = false; }
+    if (result.error || !draftsCleared) onAuthNotice([
+      result.error ? 'לא ניתן לאשר יציאה מכל המכשירים. יש לבדוק את החיבור ולהתחבר שוב כדי לנסות מחדש.' : '',
+      draftsCleared ? 'הטיוטות המקומיות נמחקו מהמכשיר הזה.' : 'מחיקת הטיוטות במכשיר לא הושלמה. יש לבדוק את אחסון האתר לפני מסירת המכשיר לאחר.',
+    ].filter(Boolean).join(' '));
+    if (result.error) throw result.error;
+  }
   function startPayment(item:ObligationSummary){
     if(!data)return;
     const obligation=item.obligation;
@@ -81,15 +102,15 @@ export default function Workspace({ userId, updateAvailable, onUpdate }: { userI
       {store.error&&<div className="notice error-banner" role="alert"><p>{store.error}</p><p className="small">מוצגים הנתונים האחרונים שנטענו, לא יתרה עדכנית מאומתת.</p><button className="text-button" onClick={()=>void store.refresh()}>רענון הנתונים</button></div>}
       {actionError&&<div className="notice error-banner" role="alert">{actionError}<button className="icon-button" aria-label="סגירת הודעה" onClick={()=>setActionError('')}><X size={16}/></button></div>}
       {store.pending&&!store.busy&&<div className="notice notice-warning" role="alert"><p>תוצאת השמירה הקודמת לא אושרה. לא תיווצר פעולה נוספת.</p><button className="text-button" onClick={()=>void store.retryPending().then(()=>{setEditor(null);showToast('השמירה נבדקה והושלמה פעם אחת');}).catch((cause)=>setActionError(humanError(cause)))}>בדיקת השמירה וניסיון חוזר</button></div>}
-      {page==='overview'&&<Overview data={data} onObligations={()=>navigate('obligations')} onSettings={()=>navigate('settings')} onPay={setPayDetail}/>}
+      {page==='overview'&&<Overview onMoney={()=>navigate('money')} data={data} onObligations={()=>navigate('obligations')} onSettings={()=>navigate('settings')} onPay={setPayDetail}/>}
       {page==='history'&&<><div className="page-heading"><div><h1>תנועות</h1><p className="page-subtitle">כל מה שנכנס, יצא והשתנה</p></div><button className="text-button" onClick={()=>openEntry()}><Plus size={18}/>תנועה</button></div><div className="inline" style={{marginBlockEnd:20}}><button className="button button-secondary" onClick={()=>openEntry({kind:'income'})}><ArrowDownLeft size={17}/>הכנסה</button><button className="button button-secondary" onClick={()=>openEntry({kind:'transfer'})}><ArrowLeftRight size={17}/>העברה</button><button className="button button-secondary" onClick={()=>openEntry({kind:'repayment'})}><CornerDownLeft size={17}/>החזר חוב</button></div><TransactionHistory data={data} onEdit={(tx)=>openEntry(tx.input,tx)} onVoid={voidTransaction} onRefund={(tx)=>openEntry({kind:'refund',originalTransactionId:tx.id,accountId:tx.input.accountId,categoryId:tx.input.categoryId})}/></>}
-      {page==='obligations'&&<ObligationsPage data={data} onEntity={openEntity} onEntry={openEntry} onPay={setPayDetail}/>}
+      {page==='obligations'&&<ObligationsPage onSettings={()=>navigate('settings')} data={data} onEntity={openEntity} onEntry={openEntry} onPay={setPayDetail}/>}
       {page==='money'&&<MoneyPage data={data} onEntity={openEntity} onEntry={openEntry} onSettings={()=>navigate('settings')}/>}
-      {page==='settings'&&<SettingsPage data={data} sessionKey={sessionKey} onBack={()=>navigate('money')} onEntity={openEntity} execute={store.execute} onSignOut={signOut} pending={Boolean(store.pending)}/>}
+      {page==='settings'&&<Suspense fallback={<p role="status">טוענים הגדרות וגיבוי…</p>}><SettingsPage data={data} sessionKey={sessionKey} onBack={()=>navigate('money')} onEntity={openEntity} execute={store.execute} onSignOut={signOut} pending={Boolean(store.pending)}/></Suspense>}
       <p className="muted small" style={{marginBlockStart:32}}>{store.busy?'שומרים…':store.lastLoaded?<>נטען לאחרונה ב־<bdi>{new Date(store.lastLoaded).toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'})}</bdi></>:'המידע טרם נטען'}</p>
-      {updateAvailable&&!editor&&!store.pending&&!store.busy&&<div className="notice section"><p>עדכון חדש לאפליקציה מוכן.</p><button className="text-button" onClick={onUpdate}>רענון והתקנת העדכון</button></div>}
+      {updateAvailable&&!editor&&!store.pending&&!store.busy&&<div className="notice section update-notice"><p>עדכון חדש לאפליקציה מוכן.</p><button className="text-button" onClick={onUpdate}>רענון והתקנת העדכון</button></div>}
     </main>
-    <nav className="bottom-nav" aria-label="ניווט ראשי"><span className="desktop-nav-title">Lova</span><button className={`nav-item ${page==='overview'?'active':''}`} onClick={()=>navigate('overview')} aria-current={page==='overview'?'page':undefined}><ChartNoAxesColumnIncreasing size={23}/><span>סקירה</span></button><button className={`nav-item ${page==='history'?'active':''}`} onClick={()=>navigate('history')} aria-current={page==='history'?'page':undefined}><List size={23}/><span>תנועות</span></button><button className="nav-add" disabled={entryCoolingDown||store.busy} aria-label="הוספת הוצאה" onClick={()=>openEntry()}><Plus size={28}/></button><button className={`nav-item ${page==='obligations'?'active':''}`} onClick={()=>navigate('obligations')} aria-current={page==='obligations'?'page':undefined}><CalendarDays size={23}/><span>התחייבויות</span></button><button className={`nav-item ${['money','settings'].includes(page)?'active':''}`} onClick={()=>navigate('money')} aria-current={['money','settings'].includes(page)?'page':undefined}><Wallet size={23}/><span>הכסף שלי</span></button></nav>
+    <nav className="bottom-nav" ref={navRef} aria-label="ניווט ראשי"><span className="desktop-nav-title">Lova</span><button className={`nav-item ${page==='overview'?'active':''}`} onClick={()=>navigate('overview')} aria-current={page==='overview'?'page':undefined}><ChartNoAxesColumnIncreasing size={23}/><span>סקירה</span></button><button className={`nav-item ${page==='history'?'active':''}`} onClick={()=>navigate('history')} aria-current={page==='history'?'page':undefined}><List size={23}/><span>תנועות</span></button><button className="nav-add" disabled={entryCoolingDown||store.busy} aria-label="הוספת הוצאה" onClick={()=>openEntry()}><Plus size={28}/></button><button className={`nav-item ${page==='obligations'?'active':''}`} onClick={()=>navigate('obligations')} aria-current={page==='obligations'?'page':undefined}><CalendarDays size={23}/><span>התחייבויות</span></button><button className={`nav-item ${['money','settings'].includes(page)?'active':''}`} onClick={()=>navigate('money')} aria-current={['money','settings'].includes(page)?'page':undefined}><Wallet size={23}/><span>הכסף שלי</span></button></nav>
     {editor?.kind==='entry'&&<EntrySheet key={editor.key} data={data} sessionKey={sessionKey} initial={editor.initial} editing={editor.editing} onClose={()=>{if(!store.busy)setEditor((current)=>current?.key===editor.key?null:current);}} onSave={saveEntry}/>}
     {editor?.kind==='entity'&&<EntityEditor key={editor.key} data={data} kind={editor.entity} existing={editor.existing} initialAccountKind={editor.accountKind} onClose={()=>{if(!store.busy)setEditor((current)=>current?.key===editor.key?null:current);}} onSave={saveEntity}/>}
     {payDetail&&<Modal title={payDetail.obligation.title} onClose={()=>setPayDetail(null)}><div className="form-stack"><p className="muted">מועד תשלום: {dateLabel(payDetail.obligation.dueDate)}</p><div className="summary-row"><span>סכום ההתחייבות</span>{payDetail.obligation.expectedMinor===null?<span className="warning">חסר מידע</span>:<Money value={payDetail.obligation.expectedMinor}/>}</div><div className="summary-row"><span>כבר שולם</span><Money value={payDetail.paidMinor}/></div><div className="summary-row"><span>עוד נשאר לשלם</span>{payDetail.remainingMinor===null?<span className="warning">חסר מידע</span>:<Money value={payDetail.remainingMinor}/>}</div>

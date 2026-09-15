@@ -54,7 +54,7 @@ svg { flex-shrink: 0; }
 .row-button { display: flex; align-items: center; justify-content: space-between; gap: 12px; inline-size: 100%; background: none; border: 0; text-align: start; padding: 0; min-block-size: 44px; }
 .row-title { font-weight: 500; }
 .row-description { color: var(--muted); font-size: var(--type-small); margin-block-start: 4px; }
-.row-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.row-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; flex-shrink: 0; }
 .badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 6px; background: var(--surface-raised); font-size: .78rem; color: var(--muted); }
 .badge-warning { color: var(--warning); }
 .badge-success { color: var(--mint); }
@@ -160,3 +160,47 @@ textarea { min-block-size: 80px; resize: vertical; }
 .hero-number, .after-obligations .value, .month-pair .metric-value { container-type: inline-size; }
 .hero-number > .numeric, .after-obligations .value > .numeric, .month-pair .metric-value > .numeric { font-size: clamp(.875rem, calc(160cqi / var(--money-length)), 1em); }
 .numeric > span { display: inline-block; }
+
+/* A persistent opaque strip protects text while scrolling in iOS's translucent
+   status-bar mode. Padding alone scrolls away. Variables allow regression tests
+   to exercise real inset geometry without claiming physical-device coverage. */
+:root { --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); --safe-right: env(safe-area-inset-right, 0px); --safe-left: env(safe-area-inset-left, 0px); }
+html { scroll-padding-block: calc(var(--safe-top) + 16px) calc(var(--nav-occupied, 114px) + 16px); }
+.safe-area-shield { position: fixed; z-index: 300; inset-block-start: 0; inset-inline: 0; block-size: var(--safe-top); background: var(--bg); pointer-events: none; }
+.app { padding-block-start: var(--safe-top); padding-inline: var(--safe-right) var(--safe-left); }
+.brand { white-space: nowrap; }
+.app-header { flex-wrap: wrap; gap: 8px; }
+.page { padding-block-end: calc(var(--nav-occupied, calc(var(--nav-height) + var(--safe-bottom))) + 36px); }
+.bottom-nav { padding-block-end: calc(10px + var(--safe-bottom)); padding-inline: max(10px, var(--safe-right)) max(10px, var(--safe-left)); }
+.sheet-overlay { inset-block-start: var(--viewport-top, 0px); inset-block-end: auto; block-size: var(--viewport-height, 100dvh); padding-block-start: calc(var(--safe-top) + 12px); }
+.sheet { max-block-size: 100%; padding-inline: max(24px, var(--safe-right)) max(24px, var(--safe-left)); padding-block-end: max(24px, var(--safe-bottom)); scroll-padding-block: 16px 100px; }
+.auth-page { padding-block: calc(32px + var(--safe-top)) calc(32px + var(--safe-bottom)); padding-inline: max(24px, var(--safe-right)) max(24px, var(--safe-left)); }
+.toast { z-index: 50; inset-block-end: calc(var(--nav-occupied, calc(var(--nav-height) + var(--safe-bottom))) + 12px); }
+body:has([role='dialog']) .toast { visibility: hidden; }
+body:has([role='dialog'], [data-update-blocked='true']) .update-notice { display: none; }
+html[data-keyboard='true'] { --safe-bottom: 0px; }
+html[data-keyboard='true'] .bottom-nav, html[data-keyboard='true'] .toast { visibility: hidden; }
+.metric-state { display: inline-block; line-height: 1.6; }
+.metric-context { color: var(--muted); font-size: .875rem; line-height: 1.7; margin-block: 8px; }
+.section-header, .page-heading { flex-wrap: wrap; }
+.section-header > * { min-inline-size: 0; }
+.section-header .money-total { margin-block: 0; }
+.details-block .section-header { align-items: start; }
+.details-block .section-header > div:first-child { flex: 1 1 180px; }
+.details-block .section-header .money-total { flex: 0 1 auto; max-inline-size: 100%; }
+.list-row .inline { gap: 12px; }
+summary { min-block-size: 44px; padding-block: 10px; cursor: pointer; }
+select { block-size: auto; }
+@media (max-width: 370px) {
+  .page, .app-header { padding-inline: 18px; }
+  .month-pair { gap: 12px; }
+  .hero-number { font-size: 3rem; }
+}
+@media (min-width: 800px) {
+  .app { padding-inline-start: calc(220px + var(--safe-right)); }
+  .page { padding-block-end: 60px; }
+  .sheet-overlay { padding: max(32px, var(--safe-top)) 32px max(32px, var(--safe-bottom)); }
+  .toast { inset-block-end: 32px; }
+}
+.tabs button { flex: 1; min-inline-size: 0; overflow-wrap: anywhere; }
+@media (max-width: 430px) { .brand-subtitle { font-size: .75rem; } }

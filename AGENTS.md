@@ -7,6 +7,7 @@
 - Financial writes are atomic, idempotent, owner-scoped, and revision-checked. Never weaken invariants to pass a test.
 - Keep unknown, incomplete, failed requests, and known zero distinct. Propagate completeness through financial summaries.
 - Hebrew/RTL and iPhone usability come first. Use logical CSS, isolated numeric text, large touch targets, and Quiet Balance design tokens.
+- Shared safe-area layout must protect scrolling content and keyboard-visible actions. Never apply PWA updates during active forms or pending writes.
 - Normal expense entry is amount → category → save. Preserve drafts and never claim an unconfirmed write is saved.
 - Run financial tests after financial changes; verify meaningful user flows and mobile layout. Fix failures before handing off.
 - Never log financial data or ship privileged credentials. Maintain independent validated JSON backup/restore.

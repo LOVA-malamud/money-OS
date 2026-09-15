@@ -37,6 +37,14 @@ test('production worker installs before login, caches only static assets and upd
   const update=page.getByRole('button',{name:'רענון והתקנת העדכון',exact:true});
   await expect(update).toBeVisible();
   await expect.poll(()=>page.evaluate(async()=>Boolean((await navigator.serviceWorker.ready).waiting))).toBe(true);
+  // A waiting worker must not interrupt an actual unfinished form.
+  await page.getByLabel('סיסמה', { exact: true }).fill('unsent-local-form');
+  await expect(update).toBeHidden();
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  expect(await page.evaluate(async()=>Boolean((await navigator.serviceWorker.ready).waiting))).toBe(true);
+  await expect(page.getByLabel('סיסמה', { exact: true })).toHaveValue('unsent-local-form');
+  await page.getByLabel('סיסמה', { exact: true }).fill('');
+  await expect(update).toBeVisible();
   await update.click();
   await expect(update).toBeHidden();
   await expect.poll(()=>page.evaluate(async()=>Boolean((await navigator.serviceWorker.ready).waiting))).toBe(false);

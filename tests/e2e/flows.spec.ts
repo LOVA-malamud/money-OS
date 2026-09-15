@@ -226,7 +226,8 @@ test('refund keeps its original account/category and rejects an excessive second
 
 test('empty setup distinguishes unknown balances, then records openings, income and a transfer', async ({ page, request }) => {
   await reset(request, false); await login(page);
-  await expect(page.getByText('נשלים את התמונה כדי להציג יתרות שאפשר להבין.')).toBeVisible();
+  await expect(page.getByText('חסרה יתרת פתיחה', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'השלמת יתרות', exact: true })).toBeVisible();
   await nav(page, 'הכסף שלי');
   async function addAccount(name: string, accountKind: string, opening: string) {
     await page.getByRole('button', { name: 'חשבון', exact: true }).click();

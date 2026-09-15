@@ -43,7 +43,8 @@ test('recovery request, callback, password update and new-password login work to
     await expect(page.getByRole('navigation', { name: 'ניווט ראשי' })).toBeVisible();
     expect(new URL(page.url()).hash).not.toContain('access_token');
 
-    await page.getByRole('button', { name: 'סקירת הנתונים שלי', exact: true }).click();
+    await page.getByRole('navigation').getByRole('button', { name: 'הכסף שלי', exact: true }).click();
+    await page.getByRole('button', { name: 'הגדרות וגיבוי', exact: true }).click();
     await page.getByRole('button', { name: 'יציאה מהחשבון', exact: true }).click();
     await page.getByRole('button', { name: 'יציאה ומחיקת טיוטות מקומיות', exact: true }).click();
     await page.getByLabel('דוא״ל', { exact: true }).fill(email);

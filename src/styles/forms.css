@@ -2,7 +2,7 @@
 .sheet-handle { inline-size: 36px; block-size: 4px; border-radius: 99px; background: var(--muted); opacity: .4; margin: -8px auto 18px; }
 .entry-fieldset { border: 0; padding: 0; margin: 0; min-inline-size: 0; }
 .entry-fieldset > * + * { margin-block-start: var(--space-3); }
-.entry-sheet .sheet-header { margin-block-end: var(--space-3); }
+.entry-sheet .sheet-header { margin-block-end: var(--space-2); }
 .entry-fieldset.form-stack > * + * { margin-block-start: 0; }
 .entry-kind { max-inline-size: 230px; margin-inline: auto; }
 .entry-kind select { min-block-size: 40px; border: 0; background: transparent; text-align: center; color: var(--muted); font-size: .875rem; }
@@ -95,3 +95,24 @@
   .transaction-amount { font-size: 1.0625rem; }
 }
 .transaction-amount { flex-shrink: 1; min-inline-size: 0; max-inline-size: 60%; white-space: normal; overflow-wrap: anywhere; }
+/* Keep the submit button inside the visible sheet, above the home indicator. */
+.sheet-actions { inset-block-end: 0; padding-block: 12px max(12px, var(--safe-bottom)); margin-block-end: 0; }
+.entry-context-compact { grid-template-columns: minmax(0, 1fr); }
+.entry-context-compact .field > span:not(.select-control) { display: none; }
+.entry-context-compact select { background: transparent; border: 0; }
+.entry-context-compact .select-display { color: var(--muted); }
+.entry-context-compact + .small { margin-block-start: 0; }
+.details-toggle { gap: 8px; }
+.details-toggle > .small { margin-inline-start: auto; }
+@media (max-height: 600px) { .sheet-header { margin-block-end: 12px; } .sheet-handle { display: none; } }
+
+.sheet:has(.sheet-actions) { padding-block-end: 0; }
+
+@media (max-width: 799px) and (max-height: 900px) {
+  .entry-sheet { padding-block-start: 16px; }
+  .entry-sheet .sheet-handle { margin-block-end: 10px; }
+  .entry-sheet .entry-amount { font-size: 3rem; }
+  .entry-sheet .entry-fieldset > * + * { margin-block-start: var(--space-2); }
+  .entry-sheet .category-option { min-block-size: 60px; padding-block: 8px; gap: 4px; }
+  .entry-sheet .entry-keypad { gap: 4px; }
+}

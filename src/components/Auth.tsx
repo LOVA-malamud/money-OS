@@ -11,7 +11,7 @@ export function ConfigurationScreen() {
     <p className="auth-footer">החשבון מיועד לשימוש אישי. לא נשמרים כאן סיסמאות בנק או פרטי כניסה לבנק.</p>
   </main>;
 }
-export function AuthScreen({ recovery = false, onRecovered }: { recovery?: boolean; onRecovered?: () => void }) {
+export function AuthScreen({ recovery = false, onRecovered, notice }: { recovery?: boolean; onRecovered?: () => void; notice?: string }) {
   const [email, setEmail] = useState(isLocalTest ? 'owner@lova.test' : '');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
@@ -37,13 +37,14 @@ export function AuthScreen({ recovery = false, onRecovered }: { recovery?: boole
     } catch (cause) { setError(humanError(cause)); }
     finally { setBusy(false); }
   }
-  return <main className="auth-page"><div className="auth-brand">Lova</div><h1>{recovery ? 'סיסמה חדשה' : 'התמונה הכלכלית שלך'}</h1>
+  return <main className="auth-page" data-update-blocked={busy || recovery || password.length > 0}><div className="auth-brand">Lova</div><h1>{recovery ? 'סיסמה חדשה' : 'התמונה הכלכלית שלך'}</h1>
     <p>{recovery ? 'בחרו סיסמה חזקה לחשבון הפרטי.' : 'הכסף, ההתחייבויות ומה שנשאר — במקום אחד, ברור ושקט.'}</p>
+    {notice && <p className="notice notice-warning" role="alert">{notice}</p>}
     <form className="form-stack" onSubmit={submit}>
       {!recovery && <label className="field"><span>דוא״ל</span><input type="email" dir="ltr" autoComplete="username" required value={email} onChange={(event) => setEmail(event.target.value)} /></label>}
       <label className="field"><span>{recovery ? 'סיסמה חדשה' : 'סיסמה'}</span><input type="password" dir="ltr" minLength={recovery ? 12 : 1} autoComplete={recovery ? 'new-password' : 'current-password'} required value={password} onChange={(event) => setPassword(event.target.value)} /></label>
       {error && <p className="error" role="alert">{error}</p>}{message && <p className="notice" role="status">{message}</p>}
-      <button className="button button-primary full-width" disabled={busy}>{busy ? 'מתחברים…' : recovery ? 'עדכון הסיסמה' : 'כניסה לחשבון'}<ArrowLeft size={18} /></button>
+      <button className="button button-primary full-width" disabled={busy}>{busy ? recovery ? 'מעדכנים את הסיסמה…' : 'מתחברים…' : recovery ? 'עדכון הסיסמה' : 'כניסה לחשבון'}<ArrowLeft size={18} /></button>
       {!recovery && <button className="text-button" type="button" disabled={busy} onClick={() => void reset()}>שכחתי סיסמה</button>}
     </form>
     <div className="auth-footer inline"><LockKeyhole size={16} /><span>חשבון פרטי · גישה לבעלים בלבד</span></div>

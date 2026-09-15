@@ -1,6 +1,8 @@
 # Quiet Balance — Phase A QA
 
-final result: passed
+Historical visual baseline: passed
+
+The owner subsequently reported a physical-iPhone safe-area defect. The 2026-09-15 follow-up is documented in [mobile-quality-pass.md](docs/mobile-quality-pass.md); [deployment-status.md](docs/deployment-status.md) is the current release record. Physical-device confirmation of the follow-up remains required.
 
 This result covers the local implementation and its visual comparison. Production provisioning and a physical iPhone installation remain release gates; they are not implied by this visual pass.
 
