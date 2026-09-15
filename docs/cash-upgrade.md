@@ -14,7 +14,9 @@ The migration reuses any existing Cash account, even if renamed or archived, and
 
 The migration checks preservation of existing settings, generation, transactions/postings, allocations, accounts, payment methods, categories, debt/obligation/recurrence records, audit entries and operation receipts inside the transaction. It adds only missing entities and their creation audit entries. It does not run defaults on every read or after restore, so older backups still reconstruct their original financial dataset exactly.
 
-Production preflight found an active, spendable Cash account with a known opening. It will be reused unchanged. A read-only JSON safety export was privately saved and validated before migration, with file mode `600` in ignored `.local/deployment/`. Production data was not used as test fixtures.
+Production preflight found an active, spendable Cash account with a known opening; it was reused unchanged. Validated private JSON exports before and after migration confirm existing accounts, payment methods, transactions/postings, allocations, settings, generation, debts, obligations, recurrences and operation receipts are identical. All existing categories and audit entries remain identical; exactly three categories were added. Both exports have file mode `600` in ignored `.local/deployment/`. Production data was not used as test fixtures.
+
+The migration committed once. During the first follow-up verification, the SQL Editor retained the prior buffer; an additional create attempt was rejected immediately because the helper already existed. The editor was cleared, exact query text verified, and read-only verification completed. The original Phase A migration was never rerun; post-upgrade comparison confirms no existing data changed.
 
 ## Validation and release
 
