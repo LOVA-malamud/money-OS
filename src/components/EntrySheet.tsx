@@ -1,6 +1,6 @@
 import { Select, cycleDialogFocus } from './Primitives';
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
-import { ArrowLeftRight, ChevronDown, Delete, Heart, House, MoreHorizontal, ShoppingBag, ShoppingCart, CarFront, Banknote, Percent, BriefcaseBusiness, Utensils, WalletCards, X } from 'lucide-react';
+import { ArrowLeftRight, ChevronDown, Delete, Heart, House, MoreHorizontal, ShoppingBag, ShoppingCart, CarFront, Banknote, Percent, BriefcaseBusiness, Utensils, WalletCards, X, Fuel, Leaf, Pill } from 'lucide-react';
 import type { Dataset, EntryKind, FinancialEntryInput, Transaction } from '../domain/types';
 import { absMoney, formatMoney, formatMoneyInput, minor, parseMoney, subtractMoney } from '../domain/money';
 import { todayJerusalem } from '../domain/dates';
@@ -57,6 +57,9 @@ function editableMoney(value?: string): string {
   return value === undefined ? '' : formatMoneyInput(value);
 }
 function CategoryIcon({ name }: { name: string }) {
+  if (/דלק|fuel/i.test(name)) return <Fuel size={23} />;
+  if (/וויד|leaf/i.test(name)) return <Leaf size={23} />;
+  if (/אטנט|pill/i.test(name)) return <Pill size={23} />;
   if (/תחבורה|רכב|transport|car|bus/i.test(name)) return <CarFront size={23} />;
   if (/סופר|מכולת|grocer|cart|basket/i.test(name)) return <ShoppingCart size={23} />;
   if (/משכורת|salary|banknote/i.test(name)) return <Banknote size={23} />;
@@ -86,9 +89,20 @@ export function EntrySheet({ data, sessionKey, onClose, onSave, initialKind = 'e
   const draftContext = JSON.stringify({ initial: provided ?? null, revision: editing?.revision ?? null });
   const defaultPayment = data.paymentMethods.find(method => method.id === data.settings.lastPaymentMethodId && data.accounts.some(account => account.id === method.accountId && !account.archived && (firstKind === 'expense' || firstKind === 'refund' ? !['loan', 'asset'].includes(account.kind) : ['bank', 'cash', 'savings'].includes(account.kind))));
   const defaultAccount = data.accounts.find(account => !account.archived && ['bank', 'cash', 'savings'].includes(account.kind));
+  const recentSourceKey = `lova:${sessionKey}:last-expense-source`;
+  // A direct Cash account is a payment source too. Only remember a confirmed
+  // expense; keep this device preference separate from financial records.
+  const recentSource = (() => {
+    if (firstKind !== 'expense') return '';
+    try {
+      const source = localStorage.getItem(recentSourceKey) ?? '';
+      const id = source.startsWith('method:') ? data.paymentMethods.find(method => method.id === source.slice(7))?.accountId : source.startsWith('account:') ? source.slice(8) : '';
+      return data.accounts.some(item => item.id === id && !item.archived && ['bank', 'cash', 'savings', 'credit_card'].includes(item.kind)) ? source : '';
+    } catch { return ''; }
+  })();
   const buildDefault = (): Draft => ({
     kind: firstKind, amount: provided?.amountMinor !== undefined && ['opening', 'reconcile', 'valuation'].includes(firstKind) && data.accounts.some(item => item.id === provided.accountId && ['credit_card', 'loan'].includes(item.kind)) ? formatMoneyInput(absMoney(provided.amountMinor)) : editableMoney(provided?.amountMinor), date: provided?.date ?? todayJerusalem(),
-    source: provided?.paymentMethodId ? `method:${provided.paymentMethodId}` : provided?.accountId ? `account:${provided.accountId}` : defaultPayment ? `method:${defaultPayment.id}` : defaultAccount ? `account:${defaultAccount.id}` : '',
+    source: provided?.paymentMethodId ? `method:${provided.paymentMethodId}` : provided?.accountId ? `account:${provided.accountId}` : recentSource || (defaultPayment ? `method:${defaultPayment.id}` : defaultAccount ? `account:${defaultAccount.id}` : ''),
     toAccountId: provided?.toAccountId ?? '', categoryId: provided?.categoryId ?? '',
     merchant: provided?.merchant ?? '', note: provided?.note ?? '', interest: editableMoney(provided?.interestMinor),
     fee: editableMoney(provided?.feeMinor),
@@ -195,6 +209,7 @@ export function EntrySheet({ data, sessionKey, onClose, onSave, initialKind = 'e
       }
       setSaving(true);
       await onSave(input, editing?.id, editing?.revision, draftKey);
+      if (input.kind === 'expense') { try { localStorage.setItem(recentSourceKey, form.source); } catch { /* A preference failure cannot undo a confirmed expense. */ } }
       try { localStorage.removeItem(draftKey); } catch { /* A storage failure does not undo a confirmed transaction. */ }
       onClose();
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'השמירה לא אושרה. הפרטים נשארו כאן ואפשר לנסות שוב.'); }
@@ -224,11 +239,12 @@ export function EntrySheet({ data, sessionKey, onClose, onSave, initialKind = 'e
         <div className="entry-context">
           <label className="field"><span><WalletCards size={15} aria-hidden="true" /> {form.kind === 'borrowing' ? 'חשבון לקבלת הכסף' : 'חשבון / אמצעי תשלום'}</span><Select displayValue={account ? <><span>{paymentMethod?.name ?? account.name}</span>{paymentMethod?.suffix && <bdi dir="ltr">{paymentMethod.suffix}</bdi>}</> : undefined} value={form.source} onChange={event => change('source', event.target.value)} disabled={form.kind === 'refund' && Boolean(form.originalTransactionId)} required>
             <option value="">בחירת חשבון</option>
-            {sourceAccounts.map(item => <option key={item.id} value={`account:${item.id}`}>{item.name}</option>)}
+            {sourceAccounts.map(item => <option key={item.id} value={`account:${item.id}`}>{item.name}{item.kind === 'cash' ? ' · בארנק' : ''}</option>)}
             {!isBalance && sourceMethods.map(method => <option key={method.id} value={`method:${method.id}`}>{method.name}{method.suffix ? ` · ${method.suffix}` : ''}</option>)}
           </Select></label>
           <label className="field"><span>תאריך{form.date === todayJerusalem() ? ' · היום' : ''}</span><input type="date" dir="ltr" value={form.date} max={todayJerusalem()} onChange={event => change('date', event.target.value)} required /></label>
         </div>
+        {account?.kind === 'cash' && <p className="small muted">{isBalance ? 'הסכום הפיזי שכבר נמצא בארנק בתאריך שנבחר. יתרת פתיחה אינה הכנסה.' : form.kind === 'income' ? 'הכנסה חדשה שהתקבלה במזומן. משיכת כסף מהבנק נרשמת כהעברה בין חשבונות.' : 'מזומן · הכסף הפיזי בארנק.'}{!isBalance && !account.openingKnown && ' יש להגדיר קודם יתרת פתיחה ב״הכסף שלי״, גם אם היא אפס.'}</p>}
         {sourceAccounts.length === 0 && <p className="notice">יש להוסיף חשבון מתאים דרך ״הכסף שלי״ לפני רישום התנועה. הטיוטה תישמר עד לחזרה.</p>}
         {needsDestination && <label className="field"><span><ArrowLeftRight size={16} aria-hidden="true" /> {needsLiability ? 'החוב' : 'אל חשבון'}</span><Select value={form.toAccountId} onChange={event => change('toAccountId', event.target.value)} required><option value="">{needsLiability ? 'בחירת חוב' : 'בחירת חשבון יעד'}</option>{destinationAccounts.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</Select></label>}
         {form.kind === 'refund' && <label className="field"><span>ההוצאה המקורית</span><Select value={form.originalTransactionId} onChange={event => { const original = originalExpenses.find(transaction => transaction.id === event.target.value); setForm(current => ({ ...current, originalTransactionId: event.target.value, source: original ? original.input.paymentMethodId ? `method:${original.input.paymentMethodId}` : `account:${original.input.accountId}` : current.source, categoryId: original?.input.categoryId ?? '' })); }} required><option value="">בחירת הוצאה</option>{originalExpenses.map(transaction => <option key={transaction.id} value={transaction.id}>{transaction.input.date} · {transaction.input.merchant || data.categories.find(category => category.id === transaction.input.categoryId)?.name || 'הוצאה'} · {formatMoney(transaction.input.amountMinor)}</option>)}</Select></label>}

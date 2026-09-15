@@ -5,7 +5,7 @@ import type { Command, CommandAction, Dataset, MutationResult } from '../../src/
 
 export const OWNER_ID = '11111111-1111-4111-8111-111111111111';
 export const OTHER_ID = '22222222-2222-4222-8222-222222222222';
-export async function createDatabase() {
+export async function createDatabase(options: { originalOnly?: boolean } = {}) {
   const db = new PGlite();
   await db.exec(`
     create role anon nologin;
@@ -19,6 +19,7 @@ export async function createDatabase() {
   `);
   const migration = await readFile(new URL('../../supabase/migrations/202609130001_phase_a.sql', import.meta.url), 'utf8');
   await db.exec(migration);
+  if (!options.originalOnly) await db.exec(await readFile(new URL('../../supabase/migrations/202609150001_cash_categories.sql', import.meta.url), 'utf8'));
   await db.query('insert into private.app_owner(user_id) values ($1)', [OWNER_ID]);
   return db;
 }

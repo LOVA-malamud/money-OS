@@ -242,7 +242,12 @@ test('empty setup distinguishes unknown balances, then records openings, income 
     await expect(balance).toBeHidden();
   }
   await addAccount('חשבון בדיקה', 'bank', '1000');
-  await addAccount('ארנק בדיקה', 'cash', '0');
+  const wallet = page.locator('.list-row').filter({ has: page.getByRole('heading', { name: 'מזומן', exact: true }) });
+  await wallet.getByRole('button', { name: 'יתרת פתיחה', exact: true }).click();
+  const walletOpening = page.getByRole('dialog', { name: 'יתרה התחלתית', exact: true });
+  await walletOpening.getByLabel('יתרה מעודכנת בשקלים', { exact: true }).fill('0');
+  await walletOpening.getByRole('button', { name: 'שמירה', exact: true }).click();
+  await expect(walletOpening).toBeHidden();
   await nav(page, 'תנועות');
   await page.getByRole('button', { name: 'הכנסה', exact: true }).click();
   let editor = page.getByRole('dialog', { name: 'הכנסה חדשה', exact: true });
@@ -255,7 +260,7 @@ test('empty setup distinguishes unknown balances, then records openings, income 
   editor = page.getByRole('dialog', { name: 'העברה בין חשבונות', exact: true });
   await editor.getByRole('combobox', { name: 'חשבון / אמצעי תשלום', exact: true }).selectOption({ label: 'חשבון בדיקה' });
   await editor.getByLabel('סכום בשקלים', { exact: true }).fill('125');
-  await editor.getByRole('combobox', { name: 'אל חשבון', exact: true }).selectOption({ label: 'ארנק בדיקה' });
+  await editor.getByRole('combobox', { name: 'אל חשבון', exact: true }).selectOption({ label: 'מזומן' });
   await editor.getByRole('button', { name: 'שמירה', exact: true }).click();
   await expect(editor).toBeHidden();
   const result = await snapshot(page);

@@ -34,7 +34,7 @@ function balance(d: Awaited<ReturnType<typeof dataset>>, id: string) {
 }
 
 test('actual PostgreSQL migration creates private owner-scoped atomic RPCs', async () => {
-  expect((await dataset(db)).accounts).toEqual([]);
+  expect((await dataset(db)).accounts).toEqual([expect.objectContaining({ kind: 'cash', openingKnown: false })]);
   await expect(db.query("insert into public.money_entities(owner_id,id,kind,body,revision) values ('11111111-1111-4111-8111-111111111111',gen_random_uuid(),'account','{}',1)")).rejects.toThrow(/permission denied/);
   await asUser(db, OTHER_ID);
   await expect(dataset(db)).rejects.toThrow(/OWNER_REQUIRED/);
@@ -297,7 +297,8 @@ test('server restore rejects invalid static semantics in balanced voided history
   await execute(db, { type: 'void', id, expectedRevision: 1 });
   const backup = createBackup(await dataset(db));
   const malformed = structuredClone(backup);
-  malformed.data.accounts[0]!.kind = 'loan'; malformed.data.accounts[0]!.spendable = false;
+  const malformedBank = malformed.data.accounts.find(account => account.id === bank)!;
+  malformedBank.kind = 'loan'; malformedBank.spendable = false;
   const before = await dataset(db);
   await expect(execute(db, { type: 'restore', backup: malformed, expectedSnapshotToken: before.snapshotToken! })).rejects.toThrow(/INVALID_CASH_ACCOUNT/);
   expect(await dataset(db)).toEqual(before);

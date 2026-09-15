@@ -43,6 +43,9 @@ async function seed() {
   const first = `${today.slice(0, 7)}-01`;
   const ids = { bank: '20000000-0000-4000-8000-000000000001', savings: '20000000-0000-4000-8000-000000000002', card: '20000000-0000-4000-8000-000000000003', loan: '20000000-0000-4000-8000-000000000004', asset: '20000000-0000-4000-8000-000000000005' };
   const record = (input: FinancialEntryInput) => execute(db, { type: 'record', id: randomUUID(), input });
+  // Explicitly known zero only in this disposable populated fixture.
+  const wallet = (await dataset(db)).accounts.find(account => account.kind === 'cash')!;
+  await record({ kind: 'opening', accountId: wallet.id, amountMinor: '0', date: first });
   for (const [key, name, kind, amount] of [
     ['bank', 'החשבון שלי', 'bank', '1842050'], ['savings', 'חיסכון', 'savings', '1250000'],
     ['card', 'כרטיס אשראי', 'credit_card', '-187500'], ['loan', 'הלוואה משפחתית', 'loan', '-450000'], ['asset', 'רכב', 'asset', '3800000'],
