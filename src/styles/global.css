@@ -89,7 +89,7 @@ svg { flex-shrink: 0; }
 .summary-row { display: flex; justify-content: space-between; align-items: start; gap: 16px; padding-block: 14px; border-block-end: 1px solid var(--line); }
 .summary-row .metric-value { font-size: 1.45rem; margin: 0; text-align: end; }
 .money-total { font-size: 2rem; font-weight: 600; margin-block: 10px; }
-.sheet-overlay { position: fixed; z-index: 100; inset: 0; background: #0009; display: flex; align-items: end; justify-content: center; }
+.sheet-overlay { position: absolute; z-index: 100; inset: 0; background: #0009; display: flex; align-items: end; justify-content: center; }
 .sheet { background: var(--surface); border-radius: var(--radius-sheet) var(--radius-sheet) 0 0; inline-size: 100%; max-inline-size: 560px; max-block-size: calc(100dvh - env(safe-area-inset-top) - 16px); overflow-y: auto; overscroll-behavior: contain; padding: 20px 24px calc(24px + env(safe-area-inset-bottom)); box-shadow: var(--overlay-shadow); }
 .sheet-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-block-end: 20px; }
 .sheet-header h2 { font-size: 1.4rem; }
@@ -172,7 +172,7 @@ html { scroll-padding-block: calc(var(--safe-top) + 16px) calc(var(--nav-occupie
 .app-header { flex-wrap: wrap; gap: 8px; }
 .page { padding-block-end: calc(var(--nav-occupied, calc(var(--nav-height) + var(--safe-bottom))) + 36px); }
 .bottom-nav { padding-block-end: calc(10px + var(--safe-bottom)); padding-inline: max(10px, var(--safe-right)) max(10px, var(--safe-left)); }
-.sheet-overlay { inset-block-start: var(--viewport-top, 0px); inset-block-end: auto; block-size: var(--viewport-height, 100dvh); padding-block-start: calc(var(--safe-top) + 12px); }
+.sheet-overlay { inset-block-start: var(--viewport-page-top, 0px); inset-block-end: auto; block-size: var(--viewport-height, 100dvh); padding-block-start: calc(var(--safe-top) + 12px); }
 .sheet { max-block-size: 100%; padding-inline: max(24px, var(--safe-right)) max(24px, var(--safe-left)); padding-block-end: max(24px, var(--safe-bottom)); scroll-padding-block: 16px 100px; }
 .auth-page { padding-block: calc(32px + var(--safe-top)) calc(32px + var(--safe-bottom)); padding-inline: max(24px, var(--safe-right)) max(24px, var(--safe-left)); }
 .toast { z-index: 50; inset-block-end: calc(var(--nav-occupied, calc(var(--nav-height) + var(--safe-bottom))) + 12px); }

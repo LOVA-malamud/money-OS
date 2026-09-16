@@ -10,7 +10,8 @@ export function cycleDialogFocus(event: KeyboardEvent, root: HTMLElement | null)
 }
 
 // Dialogs live outside #root so the background can be inert for touch,
-// keyboard and assistive technology. Fixed body locking also works on iOS.
+// keyboard and assistive technology. Keep the body in document coordinates;
+// a fixed body adds another viewport-dependent layer during keyboard panning.
 export function useDialog(ref: RefObject<HTMLDivElement | null>, onClose: () => void, busy = false, initialFocus = false) {
   const state = useRef({ onClose, busy });
   state.current = { onClose, busy };
@@ -19,8 +20,10 @@ export function useDialog(ref: RefObject<HTMLDivElement | null>, onClose: () => 
     const root = document.getElementById('root');
     const wasInert = root?.inert ?? false;
     const scrollY = window.scrollY;
-    const styles = { position: document.body.style.position, top: document.body.style.top, width: document.body.style.width, overflow: document.body.style.overflow };
-    Object.assign(document.body.style, { position: 'fixed', top: `-${scrollY}px`, width: '100%', overflow: 'hidden' });
+    const bodyOverflow = document.body.style.overflow;
+    const htmlOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
     if (root) root.inert = true;
     const frame = requestAnimationFrame(() => {
       const target = initialFocus ? ref.current?.querySelector<HTMLElement>('[data-initial-focus], input, select, textarea') ?? ref.current : ref.current;
@@ -35,7 +38,8 @@ export function useDialog(ref: RefObject<HTMLDivElement | null>, onClose: () => 
     return () => {
       cancelAnimationFrame(frame);
       document.removeEventListener('keydown', key);
-      Object.assign(document.body.style, styles);
+      document.body.style.overflow = bodyOverflow;
+      document.documentElement.style.overflow = htmlOverflow;
       if (root) root.inert = wasInert;
       window.scrollTo({ top: scrollY, behavior: 'instant' });
       if (previous?.isConnected) previous.focus({ preventScroll: true });
