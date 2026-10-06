@@ -1,10 +1,42 @@
+# Dependencies and generated builds
 node_modules/
 dist/
+coverage/
+.nyc_output/
+*.tsbuildinfo
+.vite/
+.vitest/
+.cache/
+
+# Environment and local service state
 .env*
 !.env.example
-coverage/
+.vercel/
+supabase/.temp/
+.local/
+
+# Private exports and local databases
+lova-money-*.json
+*.backup.json
+*.dump
+*.sql.gz
+*.sqlite
+*.db
+backups/
+exports/
+
+# Test and development output
 test-results/
 playwright-report/
-*.tsbuildinfo
+*.log
+npm-debug.log*
+tmp/
+temp/
+
+# Editors and OS
 .DS_Store
-.local/
+.idea/
+.vscode/
+*.swp
+*.swo
+*~

@@ -26,7 +26,7 @@ VITE_SUPABASE_URL=https://YOUR-PROJECT.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=YOUR-PUBLISHABLE-KEY
 ```
 
-Run `npm install` and `npm run dev`. Sign in with the application user created above. The first load creates an empty financial dataset and Hebrew categories; it does not invent account balances, debts or known-zero completeness.
+Run `npm ci` and `npm run dev`. Sign in with the application user created above. The first load creates an empty financial dataset and Hebrew categories; it does not invent account balances, debts or known-zero completeness.
 
 ## Vercel Hobby
 
@@ -34,7 +34,7 @@ Create a Vercel project from this repository using the Vite preset: build comman
 
 Configure Supabase Authentication's Site URL to the final HTTPS production URL. Add that exact URL and the local development URL as allowed recovery redirects. Do not use a broad production redirect wildcard. Test a real owner login and password-reset link from the final URL, then install the application from Safari's Add to Home Screen menu.
 
-Hobby is intended for personal, non-commercial use. This private personal application fits that assumption; reassess the hosting plan if its purpose changes. Supabase Free projects can pause after low activity; resume a paused project from the Supabase dashboard. A network or paused-project error must remain an error, never become a zero balance. No artificial keep-alive job is required.
+Hobby is intended for personal, non-commercial use. This personal application fits that assumption; reassess the hosting plan if its purpose changes. Supabase Free projects can pause after low activity; resume a paused project from the Supabase dashboard. A network or paused-project error must remain an error, never become a zero balance. No artificial keep-alive job is required.
 
 ## Password recovery without a paid SMTP dependency
 
